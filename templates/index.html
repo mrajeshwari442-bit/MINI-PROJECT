@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Buddy Chatbot</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    body {
+        background: #eef2f7;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .chat-container {
+        width: 420px;
+        max-width: 95%;
+        height: 640px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        background: #2f6fed;
+        color: #fff;
+        padding: 16px 20px;
+        text-align: center;
+    }
+
+    .chat-header h1 {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .chat-header p {
+        font-size: 12px;
+        opacity: 0.85;
+        margin-top: 4px;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: #f7f9fc;
+    }
+
+    .message {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background: #2f6fed;
+        color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.bot {
+        align-self: flex-start;
+        background: #e7ebf3;
+        color: #222;
+        border-bottom-left-radius: 4px;
+    }
+
+    .message.bot.typing {
+        font-style: italic;
+        color: #777;
+    }
+
+    .chat-input {
+        display: flex;
+        border-top: 1px solid #e0e0e0;
+        padding: 10px;
+        background: #fff;
+        gap: 8px;
+    }
+
+    .chat-input input {
+        flex: 1;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        padding: 10px 16px;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .chat-input input:focus {
+        border-color: #2f6fed;
+    }
+
+    .chat-input button {
+        background: #2f6fed;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        padding: 0 20px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .chat-input button:hover {
+        background: #1d54c9;
+    }
+
+    .chat-input button:disabled {
+        background: #a5bdf0;
+        cursor: not-allowed;
+    }
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>📚 Study Buddy</h1>
+        <p>Your MINI PROJECT study assistant</p>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot">
+            Hi! I'm Study Buddy. Ask me anything related to your studies —
+            concepts, homework help, or exam prep. I only answer study-related
+            questions.
+        </div>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type your study question..." autocomplete="off">
+        <button id="sendBtn">Send</button>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function addMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message', sender);
+        msgDiv.textContent = text;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return msgDiv;
+    }
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, 'user');
+        userInput.value = '';
+        sendBtn.disabled = true;
+
+        const typingDiv = addMessage('Study Buddy is typing...', 'bot typing');
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+            typingDiv.remove();
+            addMessage(data.reply, 'bot');
+        } catch (error) {
+            typingDiv.remove();
+            addMessage('Error: could not reach the server. Please try again.', 'bot');
+        } finally {
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
